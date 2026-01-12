@@ -43,8 +43,11 @@ PBSC-Ignite is a comprehensive learning management system that creates personali
 
 ## 🏗 Architecture
 
+<!-- 
 ### System Architecture Diagram
+Add architecture_diagram.jpeg to app/Static/assets/ directory
 ![PBSC-Ignite Architecture Diagram](app/Static/assets/architecture_diagram.jpeg)
+-->
 
 ### Tech Stack
 - **Backend**: Flask (Python)
