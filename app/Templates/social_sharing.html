@@ -1,0 +1,356 @@
+{% extends "base.html" %}
+
+{% block title %}Social Sharing - PBSC Ignite{% endblock %}
+
+{% block content %}
+<div class="container-fluid page-body-wrapper">
+    <div class="main-panel">
+        <div class="content-wrapper">
+            <div class="page-header">
+                <h3 class="page-title">
+                    <span class="page-title-icon bg-gradient-primary text-white mr-2">
+                        <i class="mdi mdi-share-variant"></i>
+                    </span>
+                    Social Sharing
+                </h3>
+                <nav aria-label="breadcrumb">
+                    <ul class="breadcrumb">
+                        <li class="breadcrumb-item active" aria-current="page">
+                            <span></span>Share Your Progress
+                            <i class="mdi mdi-alert-circle-outline icon-sm text-primary align-middle"></i>
+                        </li>
+                    </ul>
+                </nav>
+            </div>
+
+            <!-- LinkedIn Connection Status -->
+            <div class="row">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-body">
+                            <h4 class="card-title">LinkedIn Connection</h4>
+                            {% if linkedin_connected %}
+                            <div class="alert alert-success">
+                                <i class="mdi mdi-check-circle"></i> LinkedIn account connected
+                            </div>
+                            {% else %}
+                            <div class="alert alert-warning">
+                                <i class="mdi mdi-alert"></i> LinkedIn account not connected
+                                <button class="btn btn-sm btn-primary ml-3" onclick="connectLinkedIn()">
+                                    Connect LinkedIn
+                                </button>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Generate Post Section -->
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-body">
+                            <h4 class="card-title">Generate LinkedIn Post</h4>
+                            <p class="card-description">Share your achievements and progress</p>
+                            
+                            <form id="generatePostForm">
+                                <div class="form-group">
+                                    <label for="postType">Post Type</label>
+                                    <select class="form-control" id="postType" name="postType">
+                                        <option value="milestone">Learning Milestone</option>
+                                        <option value="project">Project Completion</option>
+                                        <option value="skill">New Skills</option>
+                                        <option value="assessment">Assessment Completion</option>
+                                    </select>
+                                </div>
+
+                                <div class="form-group" id="achievementGroup">
+                                    <label for="achievement">Achievement</label>
+                                    <input type="text" class="form-control" id="achievement" 
+                                           placeholder="e.g., Completed Advanced Python Module">
+                                </div>
+
+                                <div class="form-group" id="skillsGroup">
+                                    <label for="skills">Skills Learned (comma-separated)</label>
+                                    <input type="text" class="form-control" id="skills" 
+                                           placeholder="e.g., Python, Machine Learning, Data Analysis">
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="tone">Post Tone</label>
+                                    <select class="form-control" id="tone" name="tone">
+                                        <option value="professional">Professional</option>
+                                        <option value="casual">Casual</option>
+                                        <option value="excited">Excited</option>
+                                    </select>
+                                </div>
+
+                                <button type="submit" class="btn btn-gradient-primary mr-2">
+                                    <i class="mdi mdi-creation"></i> Generate Post
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+
+                    <!-- Recent Achievements -->
+                    <div class="card">
+                        <div class="card-body">
+                            <h4 class="card-title">Recent Achievements</h4>
+                            <div class="list-group" id="achievementsList">
+                                {% if achievements %}
+                                    {% for achievement in achievements[:5] %}
+                                    <div class="list-group-item">
+                                        <div class="d-flex justify-content-between">
+                                            <span>{{ achievement.get('description', 'Achievement') }}</span>
+                                            <small class="text-muted">{{ achievement.get('earned_at', '')[:10] }}</small>
+                                        </div>
+                                    </div>
+                                    {% endfor %}
+                                {% else %}
+                                <p class="text-muted">No achievements yet. Keep learning!</p>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Post Preview and Publishing -->
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-body">
+                            <h4 class="card-title">Post Preview</h4>
+                            <div id="postPreview" class="border rounded p-3 mb-3" style="min-height: 200px; background-color: #f8f9fa;">
+                                <p class="text-muted text-center mt-5">
+                                    <i class="mdi mdi-text-box-outline mdi-48px"></i><br>
+                                    Generate a post to see preview
+                                </p>
+                            </div>
+
+                            <div id="postActions" style="display: none;">
+                                <button class="btn btn-gradient-success btn-block" onclick="publishToLinkedIn()">
+                                    <i class="mdi mdi-linkedin"></i> Publish to LinkedIn
+                                </button>
+                                <button class="btn btn-outline-secondary btn-block" onclick="editPost()">
+                                    <i class="mdi mdi-pencil"></i> Edit Post
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Post History -->
+            <div class="row">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-body">
+                            <h4 class="card-title">Post History</h4>
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>Date</th>
+                                            <th>Post Type</th>
+                                            <th>Status</th>
+                                            <th>Preview</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="postHistoryTable">
+                                        {% if post_history %}
+                                            {% for post in post_history %}
+                                            <tr>
+                                                <td>{{ post.get('posted_at', post.get('created_at', ''))[:10] }}</td>
+                                                <td>
+                                                    <span class="badge badge-info">
+                                                        {{ post.get('post_type', 'general') }}
+                                                    </span>
+                                                </td>
+                                                <td>
+                                                    {% if post.get('status') == 'published' %}
+                                                    <span class="badge badge-success">Published</span>
+                                                    {% else %}
+                                                    <span class="badge badge-warning">Draft</span>
+                                                    {% endif %}
+                                                </td>
+                                                <td>{{ post.get('post_content', '')[:50] }}...</td>
+                                                <td>
+                                                    {% if post.get('post_url') %}
+                                                    <a href="{{ post.get('post_url') }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                                                        <i class="mdi mdi-open-in-new"></i>
+                                                    </a>
+                                                    {% endif %}
+                                                </td>
+                                            </tr>
+                                            {% endfor %}
+                                        {% else %}
+                                        <tr>
+                                            <td colspan="5" class="text-center text-muted">
+                                                No posts yet. Generate and publish your first post!
+                                            </td>
+                                        </tr>
+                                        {% endif %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let currentDraftId = null;
+let generatedPostContent = null;
+
+// Handle post generation
+document.getElementById('generatePostForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    const postType = document.getElementById('postType').value;
+    const achievement = document.getElementById('achievement').value;
+    const skills = document.getElementById('skills').value.split(',').map(s => s.trim());
+    const tone = document.getElementById('tone').value;
+    
+    // Show loading
+    const preview = document.getElementById('postPreview');
+    preview.innerHTML = '<div class="text-center"><div class="spinner-border" role="status"></div><p>Generating post...</p></div>';
+    
+    try {
+        const response = await fetch('/social/generate_post', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                type: postType,
+                achievement: achievement,
+                skills: skills,
+                tone: tone
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            generatedPostContent = data.post_content;
+            currentDraftId = data.draft_id;
+            
+            // Show preview
+            preview.innerHTML = `<div style="white-space: pre-wrap;">${data.post_content}</div>`;
+            document.getElementById('postActions').style.display = 'block';
+        } else {
+            throw new Error(data.error || 'Failed to generate post');
+        }
+    } catch (error) {
+        preview.innerHTML = `<div class="alert alert-danger">Error: ${error.message}</div>`;
+    }
+});
+
+// Publish to LinkedIn
+async function publishToLinkedIn() {
+    if (!generatedPostContent) {
+        alert('Please generate a post first');
+        return;
+    }
+    
+    if (!confirm('Publish this post to LinkedIn?')) {
+        return;
+    }
+    
+    try {
+        const response = await fetch('/social/post_to_linkedin', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                post_content: generatedPostContent,
+                draft_id: currentDraftId
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            alert('Successfully posted to LinkedIn! 🎉');
+            if (data.post_url) {
+                window.open(data.post_url, '_blank');
+            }
+            location.reload();
+        } else {
+            throw new Error(data.error || 'Failed to publish post');
+        }
+    } catch (error) {
+        alert('Error: ' + error.message);
+    }
+}
+
+// Edit post
+function editPost() {
+    const newContent = prompt('Edit your post:', generatedPostContent);
+    if (newContent && newContent !== generatedPostContent) {
+        generatedPostContent = newContent;
+        document.getElementById('postPreview').innerHTML = `<div style="white-space: pre-wrap;">${newContent}</div>`;
+    }
+}
+
+// Connect LinkedIn
+async function connectLinkedIn() {
+    try {
+        const response = await fetch('/social/connect_linkedin', {
+            method: 'POST'
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            alert('LinkedIn connected successfully!');
+            location.reload();
+        } else {
+            throw new Error(data.error || 'Failed to connect LinkedIn');
+        }
+    } catch (error) {
+        alert('Error: ' + error.message);
+    }
+}
+
+// Update form fields based on post type
+document.getElementById('postType').addEventListener('change', function() {
+    const type = this.value;
+    const achievementGroup = document.getElementById('achievementGroup');
+    const skillsGroup = document.getElementById('skillsGroup');
+    
+    // Show/hide relevant fields based on type
+    if (type === 'project') {
+        achievementGroup.querySelector('label').textContent = 'Project Name';
+        achievementGroup.querySelector('input').placeholder = 'e.g., E-commerce Website';
+    } else if (type === 'assessment') {
+        achievementGroup.querySelector('label').textContent = 'Assessment Name';
+        achievementGroup.querySelector('input').placeholder = 'e.g., Python Advanced Assessment';
+    } else {
+        achievementGroup.querySelector('label').textContent = 'Achievement';
+        achievementGroup.querySelector('input').placeholder = 'e.g., Completed Advanced Python Module';
+    }
+});
+</script>
+
+<style>
+#postPreview {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    line-height: 1.6;
+}
+
+.list-group-item {
+    border-left: 3px solid #2196f3;
+}
+
+.card-title {
+    color: #2c3e50;
+    font-weight: 600;
+}
+</style>
+{% endblock %}
