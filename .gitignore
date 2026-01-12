@@ -1,5 +1,6 @@
 # Environment variables
 .env
+.env.backup
 
 # Python
 __pycache__/
@@ -27,6 +28,7 @@ var/
 venv/
 ENV/
 env/
+pbsc_venv/
 
 # IDE files
 .idea/
@@ -45,3 +47,10 @@ instance/
 # Database
 *.db
 *.sqlite
+
+# Utility/Debug scripts (optional - remove if you want to track these)
+# check_db_data.py
+# populate_linkedin_data.py
+
+# Documentation
+README_COMPLETE.md
