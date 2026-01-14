@@ -137,7 +137,7 @@ PBSC-Ignite/
    
    # Database Configuration
    MONGO_URI=mongodb://localhost:27017/
-   DB_NAME=PBSC-Ignite-db
+   DB_NAME=Ignite-db
    
    # Redis Configuration (Optional)
    REDIS_HOST=localhost
